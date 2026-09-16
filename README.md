@@ -16,42 +16,24 @@ framework choice is not final: see [Choosing a different framework](#choosing-a-
 | App under test | debug build, `com.amaze.apptrue` |
 | Backend | live, over ngrok |
 
-## Requirements
+## Setting up
 
-Setting up for the first time? Follow **[SETUP.md](SETUP.md)** — it goes from an
-empty Mac to a passing run, one step at a time.
+**→ [SETUP.md](SETUP.md)** — installing Appium, Robot Framework and the app,
+from an empty Mac to a passing run.
 
-The short version, for a machine that is already set up:
-
-```bash
-brew install appium
-appium driver install uiautomator2
-brew install pipx && pipx ensurepath        # then open a new terminal
-pipx install robotframework
-pipx inject robotframework robotframework-appiumlibrary
-```
-
-> Install through Homebrew and pipx, not `pip3 install` — a Homebrew Mac
-> refuses the latter with `externally-managed-environment` (PEP 668).
+Installation lives there and only there, so there is one set of steps to follow
+and no second copy to drift out of date. Come back here once `robot --version`
+works.
 
 ## Running the tests
 
-**1. Get the app.** The APK is ~177 MB and is not committed, so build it:
-
-```bash
-./scripts/fetch_apk.sh          # builds, copies to apps/, installs on the device
-```
-
-By default it looks for the app repo at `../truesuperapp`; override with
-`APP_REPO=/path/to/truesuperapp ./scripts/fetch_apk.sh`.
-
-**2. Start Appium** in its own terminal, and leave it running:
+Appium runs as a server in one terminal:
 
 ```bash
 appium
 ```
 
-**3. Run:**
+The tests run in a second one:
 
 ```bash
 robot --outputdir results tests/                 # everything
@@ -61,6 +43,12 @@ robot --outputdir results tests/login.robot      # one suite
 
 Open `results/report.html` for the result and `results/log.html` to see each
 step, including a screenshot wherever a test failed.
+
+Changed the app and want the new build on the device?
+
+```bash
+./scripts/fetch_apk.sh
+```
 
 ## How the app is located
 
