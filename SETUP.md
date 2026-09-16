@@ -122,6 +122,32 @@ device through **Device Manager** (any recent Pixel is fine).
 > If Android Studio is already installed, you already have `adb` — skip the brew
 > command above.
 
+### Tell Appium where the SDK is
+
+Appium refuses to start a session without this, with
+`Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported`.
+Having `adb` on your PATH is not enough — the variable has to be set too.
+
+```bash
+echo '
+# Android SDK — Appium needs this to find adb and the emulator
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"' >> ~/.zshrc
+```
+
+Then **open a new terminal** and check:
+
+```bash
+echo $ANDROID_HOME
+```
+
+**Expected:** `/Users/<you>/Library/Android/sdk`.
+
+**If it prints nothing:** you are still in the old terminal, or the SDK is
+somewhere else. Find it with `ls ~/Library/Android/sdk`; if that path does not
+exist, open Android Studio → Settings → Languages & Frameworks → Android SDK and
+use the path shown there.
+
 ---
 
 ## Step 5 — Start the emulator
@@ -247,6 +273,7 @@ open results/report.html
 | `command not found: robot` | Step 3 not finished, or you are in the terminal from before `pipx ensurepath` | Open a new terminal; if it persists, redo step 3 |
 | `command not found: appium` | Step 1 not finished | Redo step 1 |
 | `Could not connect to http://127.0.0.1:4723` | Appium is not running | Do step 8 in its own terminal |
+| `Neither ANDROID_HOME nor ANDROID_SDK_ROOT ... was exported` | Appium cannot find the Android SDK | Set `ANDROID_HOME` (step 4), then restart Appium from a **new** terminal |
 | `An unknown server-side error... device` | The emulator is off or not visible | Redo step 5 |
 | `Application is not installed` | The app is not on the device | Redo step 6 |
 | Tests fail waiting for `branch_select_page` | Sign-in never finished — usually the backend | See "About the backend" below |
