@@ -18,14 +18,21 @@ framework choice is not final: see [Choosing a different framework](#choosing-a-
 
 ## Requirements
 
-Already needed on the machine: Node.js, Python 3, the Android SDK (`adb`), and
-a running emulator or an attached device.
+Setting up for the first time? Follow **[SETUP.md](SETUP.md)** — it goes from an
+empty Mac to a passing run, one step at a time.
+
+The short version, for a machine that is already set up:
 
 ```bash
-npm i -g appium
+brew install appium
 appium driver install uiautomator2
-pip3 install robotframework robotframework-appiumlibrary
+brew install pipx && pipx ensurepath        # then open a new terminal
+pipx install robotframework
+pipx inject robotframework robotframework-appiumlibrary
 ```
+
+> Install through Homebrew and pipx, not `pip3 install` — a Homebrew Mac
+> refuses the latter with `externally-managed-environment` (PEP 668).
 
 ## Running the tests
 
@@ -137,6 +144,7 @@ the Dart-based ones.
 ## Layout
 
 ```
+SETUP.md     first-time setup, step by step
 apps/        the APK under test (gitignored — build it with scripts/fetch_apk.sh)
 resources/   connection settings, locators, shared keywords
 tests/       one .robot suite per flow
