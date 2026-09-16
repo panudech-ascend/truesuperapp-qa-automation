@@ -2,8 +2,16 @@
 # (the debug APK is ~177 MB).
 apps/*.apk
 
-# Robot Framework run output
+# Robot Framework run output — in results/ when --outputdir is passed, and in
+# the working directory when it is not.
 results/
+log.html
+output.xml
+report.html
+
+# Generated from the installed library; regenerate with
+# `libdoc AppiumLibrary docs/AppiumLibrary.html` rather than committing it.
+docs/AppiumLibrary.html
 
 # Python
 .venv/

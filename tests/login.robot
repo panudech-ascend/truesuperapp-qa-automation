@@ -1,10 +1,11 @@
 *** Settings ***
 Documentation    Signing in with One Login.
 ...
-...              The app talks to the live backend, which currently answers
-...              every login with success and several branches. There is no way
-...              to drive a failed login from here, so the error dialog is not
-...              covered — see README "Known limitations".
+...              Runs against a build that answers from bundled mock payloads
+...              (`--dart-define=USE_MOCK_API=true`), which return a success and
+...              several branches. That build cannot be made to fail a login, so
+...              the error dialog is not covered here — see README
+...              "Known limitations".
 Resource         ../resources/app.resource
 Test Setup       Open True Shop App
 Test Teardown    Close True Shop App
