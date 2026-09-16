@@ -1,0 +1,14 @@
+# Build artifacts under test — copied in by scripts/fetch_apk.sh, never committed
+# (the debug APK is ~177 MB).
+apps/*.apk
+
+# Robot Framework run output
+results/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
