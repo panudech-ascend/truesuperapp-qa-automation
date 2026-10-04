@@ -23,7 +23,8 @@ ${DEVICE_NAME}              emulator-5554
 ${APP_PACKAGE}              com.amaze.apptrue.dev
 ${APP_ACTIVITY}             com.amaze.apptrue.MainActivity
 
-# Install from source on the first run; afterwards the installed app is reused.
+# Drop a new APK here and the next run installs it. Must be a debug build, or
+# the miniapp suites have no WEBVIEW context.
 ${APP_PATH}                 ${EXECDIR}${/}apps${/}app-debug.apk
 
 # --- Timeouts ----------------------------------------------------------------
@@ -44,6 +45,22 @@ ${BRANCH_CONFIRM_BUTTON}    xpath=//*[@resource-id='branch_confirm_button']
 # Per-branch tiles are branch_tile_<id>; ids come from the backend.
 ${BRANCH_TILE_PRIMARY}      xpath=//*[@resource-id='branch_tile_rama9']
 
+# --- Locators: Home ----------------------------------------------------------
+${NAV_TAB_HOME}             xpath=//*[@resource-id='nav_tab_home']
+# Shortcut tiles are miniapp_<route>; the route comes from the /home response.
+${MINIAPP_STOCK_TILE}       xpath=//*[@resource-id='miniapp_stock']
+
+# --- Locators: Stock miniapp (web, inside the WebView) -----------------------
+# These live in the superapp-mini-app-fe repo, not in the Flutter app, and are
+# CSS rather than XPath because the WebView context is queried as a browser.
+# Renaming a data-testid there breaks this suite.
+${STOCK_WEB_PAGE}           css=[data-testid="stock_page"]
+${STOCK_WEB_SEARCH}         css=[data-testid="stock_search_field"]
+# One card per product; the suffix is the productId the API returned.
+${STOCK_WEB_ANY_CARD}       css=[data-testid^="stock_product_card_"]
+${STOCK_BRANCHES_PAGE}      css=[data-testid="stock_branches_page"]
+${STOCK_BRANCHES_ANY_ROW}   css=[data-testid^="stock_branch_row_"]
+
 
 *** Keywords ***
 Open True Shop App
@@ -53,10 +70,14 @@ Open True Shop App
     ...    platformName=${PLATFORM_NAME}
     ...    automationName=${AUTOMATION_NAME}
     ...    deviceName=${DEVICE_NAME}
+    ...    app=${APP_PATH}
     ...    appPackage=${APP_PACKAGE}
     ...    appActivity=${APP_ACTIVITY}
     ...    autoGrantPermissions=${TRUE}
     ...    newCommandTimeout=120
+    # Fetches the chromedriver matching the device's WebView, needed by the
+    # miniapp suites.
+    ...    chromedriverAutodownload=${TRUE}
 
 Close True Shop App
     Close Application
@@ -66,3 +87,43 @@ Sign In With One Login
     ...    finish. Does not assert where it lands — callers decide that.
     Wait Until Page Contains Element    ${LOGIN_SUBMIT_BUTTON}    ${SHORT_WAIT}
     Click Element                       ${LOGIN_SUBMIT_BUTTON}
+
+Reach The Home Shell
+    [Documentation]    Signs in and confirms the preselected branch, which is
+    ...    what the app needs before any tab or miniapp is reachable.
+    Wait Until Page Contains Element    ${LOGIN_PAGE}             ${SHORT_WAIT}
+    Sign In With One Login
+    Wait Until Page Contains Element    ${BRANCH_SELECT_PAGE}     ${LOAD_WAIT}
+    Wait Until Page Contains Element    ${BRANCH_CONFIRM_BUTTON}  ${SHORT_WAIT}
+    Click Element                       ${BRANCH_CONFIRM_BUTTON}
+    Wait Until Page Contains Element    ${NAV_TAB_HOME}           ${LOAD_WAIT}
+
+Open The Stock Miniapp
+    [Documentation]    Taps the Stock shortcut, which loads
+    ...    <miniappBaseUrl>/stock in a WebView, then switches into that WebView
+    ...    so the web locators resolve. Leaves the context switched.
+    Wait Until Page Contains Element    ${MINIAPP_STOCK_TILE}    ${LOAD_WAIT}
+    Click Element                       ${MINIAPP_STOCK_TILE}
+    Switch Into The Miniapp WebView
+
+Switch Into The Miniapp WebView
+    [Documentation]    Waits for the WebView to register a context, then switches
+    ...    into it once. The wait covers the WebView still attaching; the switch
+    ...    itself is not retried, so a missing chromedriver or a release build
+    ...    fails straight away instead of after the full timeout.
+    ${context}=    Wait Until Keyword Succeeds    ${LOAD_WAIT}    1s
+    ...    Get The Miniapp Webview Context
+    Switch To Context                   ${context}
+    Wait Until Page Contains Element    ${STOCK_WEB_PAGE}    ${LOAD_WAIT}
+
+Get The Miniapp Webview Context
+    [Documentation]    Returns the first WEBVIEW context Appium reports. Named
+    ...    after the package, so it is looked up rather than hard-coded.
+    ${contexts}=    Get Contexts
+    ${webviews}=    Evaluate    [c for c in $contexts if 'WEBVIEW' in c]
+    Should Not Be Empty    ${webviews}    No WEBVIEW context yet: ${contexts}
+    RETURN    ${webviews}[0]
+
+Leave The Miniapp WebView
+    [Documentation]    Returns to the Flutter side so native locators work.
+    Switch To Context    NATIVE_APP
