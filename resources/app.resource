@@ -20,7 +20,7 @@ ${PLATFORM_NAME}            Android
 ${AUTOMATION_NAME}          UiAutomator2
 # Leave empty to let Appium pick the only attached device.
 ${DEVICE_NAME}              emulator-5554
-${APP_PACKAGE}              com.amaze.apptrue
+${APP_PACKAGE}              com.amaze.apptrue.dev
 ${APP_ACTIVITY}             com.amaze.apptrue.MainActivity
 
 # Install from source on the first run; afterwards the installed app is reused.
