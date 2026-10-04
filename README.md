@@ -1,64 +1,30 @@
 # true Shop — QA automation
 
-UI automation for the **true Shop** Flutter app (`com.amaze.apptrue`), driven
-from outside the app with Appium and written in Robot Framework.
+Automated UI tests that tap through the app on an emulator and report whether
+each flow still works.
 
-This is a proof of concept. It covers two flows — signing in, and choosing a
-branch — to prove the app can be driven by an out-of-process tool at all. The
-framework choice is not final: see [Choosing a different framework](#choosing-a-different-framework).
+**→ [SETUP.md](SETUP.md)** — install, get a build, run. That is the file you work
+from. This one is for deciding what can be tested and who to ask.
 
 ## Status
 
 | | |
 |---|---|
-| Flows covered | Sign in, branch select (4 test cases) |
-| Verified on a device | **Not yet** — see [What is unproven](#what-is-unproven) |
-| App under test | debug build, `com.amaze.apptrue` |
-| Backend | live, over ngrok |
+| Covered | Sign in, branch select, Stock — 6 tests |
+| Last checked | 6 of 6 pass |
+| Build needed | `flutter build apk --debug --flavor dev` — that one only |
+| Also needed | The Stock screens running on your machine |
+| Sign-in | Answered by the build itself — no server involved |
 
-## Setting up
+## What the tests can find
 
-**→ [SETUP.md](SETUP.md)** — installing Appium, Robot Framework and the app,
-from an empty Mac to a passing run.
+A test can only reach an element that carries a name put there on purpose. So
+this is also the list of what can be tested today — and the names are a promise
+between teams: rename one and the tests break.
 
-Installation lives there and only there, so there is one set of steps to follow
-and no second copy to drift out of date. Come back here once `robot --version`
-works.
+### App screens — ask the app team
 
-## Running the tests
-
-Appium runs as a server in one terminal:
-
-```bash
-appium
-```
-
-The tests run in a second one:
-
-```bash
-robot --outputdir results tests/                 # everything
-robot --outputdir results --include smoke tests/ # the two core cases
-robot --outputdir results tests/login.robot      # one suite
-```
-
-Open `results/report.html` for the result and `results/log.html` to see each
-step, including a screenshot wherever a test failed.
-
-Changed the app and want the new build on the device?
-
-```bash
-./scripts/fetch_apk.sh
-```
-
-## How the app is located
-
-The app is Flutter, which draws its own widgets — Appium sees one canvas, not a
-tree of buttons, so nothing is findable by default. The app therefore publishes
-an **accessibility id** on each element the tests need, via
-`Semantics(identifier:)` in the Flutter code. Those ids are the contract between
-the two repos; renaming one in the app breaks the suites here.
-
-| Accessibility id | Screen | What it is |
+| Name | Screen | What it is |
 |---|---|---|
 | `login_page` | Login | Marks the screen |
 | `login_submit_button` | Login | The One Login button |
@@ -66,76 +32,38 @@ the two repos; renaming one in the app breaks the suites here.
 | `branch_select_loading` | Branch select | Spinner while loading |
 | `branch_tile_<id>` | Branch select | One branch, e.g. `branch_tile_rama9` |
 | `branch_confirm_button` | Branch select | Confirms the choice |
+| `nav_tab_home` | Home | The Home tab |
+| `miniapp_<name>` | Home | A shortcut tile, e.g. `miniapp_stock` |
 
-All of them live in [`resources/app.resource`](resources/app.resource) as
-variables — use those, don't hard-code the strings.
+### Stock screens — ask the web team
 
-**Need an id that isn't there?** Ask the app team to add it. Do not work around
-it with a coordinate tap or an XPath over the raw tree: both break on the next
-layout change.
+| Name | Screen | What it is |
+|---|---|---|
+| `stock_page` | Stock | Marks the screen |
+| `stock_search_field` | Stock | The search box |
+| `stock_product_card_<id>` | Stock | One product; opens its branches |
+| `stock_branches_page` | Stock branches | Marks the screen |
+| `stock_branch_row_<id>` | Stock branches | One branch |
 
-## What is unproven
-
-**No test in this repo has been run against a device yet.** The suites are
-written against the ids the app publishes and the responses the backend
-currently returns, but nobody has watched them pass. Expect the first run to
-need adjustment — most likely the waits, which are guesses about how slow the
-live backend is.
-
-Before trusting a result, confirm with Appium Inspector that the ids in the
-table above actually appear on the device. If they do not, the problem is in the
-app, not in these tests.
+Testing a screen that has none? Ask the team above, and say which elements you
+need to tap or read.
 
 ## Known limitations
 
-**A failed login cannot be tested.** The backend answers every login with
-success, so the error dialog is unreachable from here. Testing it needs either a
-backend that can be told to fail, or a build pointed at a mock server
-(`--dart-define=API_BASE_URL=...`).
-
-**The branch list comes from the backend.** The tests assume several branches
-and a primary branch of `rama9`. If the backend ever returns a single branch,
-the app confirms it automatically and never shows the picker — every branch test
-would then fail without the app being broken.
-
-**Miniapps need a debug build and a context switch.** Most of the app's content
-(the Sales and Stock tabs, and ~35 miniapps) is web content inside a WebView.
-Appium sees it only after switching context:
-
-```robotframework
-Switch To Context    WEBVIEW_com.amaze.apptrue
-```
-
-That context exists only in a **debug** build — `MainActivity` enables WebView
-debugging for debuggable builds alone. A release build cannot reach inside a
-miniapp at all. Nothing here exercises that yet.
-
-## Choosing a different framework
-
-Appium and Robot Framework were picked to get this proof of concept moving, not
-because the app requires them. The app publishes standard OS accessibility ids,
-which means **Maestro**, Espresso/XCUITest, and most commercial tools can drive
-it just as well, using the same ids in the table above.
-
-Two alternatives worth weighing before committing:
-
-- **Maestro** — YAML, no server to run, far less to install. The same flows fit
-  in a few lines. Also reaches inside WebViews.
-- **Patrol** — Dart, runs through Flutter's own tooling, so no APK needs to be
-  built and handed over. It finds widgets by Flutter `Key`, which the app
-  already has ~32 of, so it would not need the accessibility ids at all.
-
-Whichever is chosen, the work already done in the app carries over: the
-accessibility ids serve every out-of-process tool, and the Flutter keys serve
-the Dart-based ones.
+| | |
+|---|---|
+| Only one build works | `--debug --flavor dev`. Any other one: the first 4 tests pass and the last 2 always fail |
+| Stock needs a dev server | Those screens are not in the APK. Stopped server → last 2 fail |
+| A failed login cannot be tested | The build always signs in, so the error dialog never appears |
+| Branch tests expect several branches | With `rama9` as the main one. A single-branch build skips the picker and they fail |
+| Only Stock is covered | The Sales tab and other miniapps have no names yet |
 
 ## Layout
 
 ```
-SETUP.md     first-time setup, step by step
-apps/        the APK under test (gitignored — build it with scripts/fetch_apk.sh)
-resources/   connection settings, locators, shared keywords
-tests/       one .robot suite per flow
-results/     run output (gitignored)
-scripts/     helpers
+SETUP.md     install, get a build, run
+apps/        app-debug.apk — the build under test, copy yours in
+tests/       one file per flow: login, branch select, Stock
+resources/   the names above, and the shared steps
+results/     the last run's report
 ```
