@@ -111,18 +111,18 @@ Switch Into The Miniapp WebView
     ...    into it once. The wait covers the WebView still attaching; the switch
     ...    itself is not retried, so a missing chromedriver or a release build
     ...    fails straight away instead of after the full timeout.
-    ${context}=    Wait Until Keyword Succeeds    ${LOAD_WAIT}    1s
+    ${webview_context}=    Wait Until Keyword Succeeds    ${LOAD_WAIT}    1s
     ...    Get The Miniapp Webview Context
-    Switch To Context                   ${context}
+    Switch To Context                   ${webview_context}
     Wait Until Page Contains Element    ${STOCK_WEB_PAGE}    ${LOAD_WAIT}
 
 Get The Miniapp Webview Context
     [Documentation]    Returns the first WEBVIEW context Appium reports. Named
     ...    after the package, so it is looked up rather than hard-coded.
-    ${contexts}=    Get Contexts
-    ${webviews}=    Evaluate    [c for c in $contexts if 'WEBVIEW' in c]
-    Should Not Be Empty    ${webviews}    No WEBVIEW context yet: ${contexts}
-    RETURN    ${webviews}[0]
+    ${all_contexts}=    Get Contexts
+    ${webview_contexts}=    Evaluate    [c for c in $all_contexts if 'WEBVIEW' in c]
+    Should Not Be Empty    ${webview_contexts}    No WEBVIEW context yet: ${all_contexts}
+    RETURN    ${webview_contexts}[0]
 
 Leave The Miniapp WebView
     [Documentation]    Returns to the Flutter side so native locators work.
